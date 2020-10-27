@@ -1,0 +1,7 @@
+<launch>
+
+   <node pkg="colordetector" type="colordetecter.py" name="colordetector" output="screen">
+	<param name="color" type="str" value="yellow"/>
+   </node>
+
+</launch>
