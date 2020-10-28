@@ -20,13 +20,14 @@ class ColorDetector(DTROS):
         # initialize the DTROS parent class
         super(ColorDetector, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
         # construct publisher
+        #self.sub = rospy.Subscriber('luna/colordetector/image/compressed', CompressedImage, self.callback)
+        
         self.sub = rospy.Subscriber('colordetector/image/compressed', CompressedImage, self.callback)
         self.pub = rospy.Publisher('colordetector/debug/image/compressed', CompressedImage, queue_size=10)
         self.bridge=CvBridge()
-        
-        #set color to deteect
-        self.color=DTParam('~color',param_type=ParamType.STR)
-
+        self.color=DTParam(
+                '~color',
+                param_type=ParamType.STRING)
     
     def detector(self,img):  
         #set detector
@@ -40,12 +41,13 @@ class ColorDetector(DTROS):
     
         #conver image to HLS
         imgHLS=cv2.cvtColor(img,cv2.COLOR_BGR2HLS)
-        
+        self.color=rospy.get_param("~color")
+        rospy.loginfo("detecting %s", self.color)
         #detect color
-        if self.color.value=='yellow':
+        if self.color=='yellow':
             #yellow color
             yellow_mask = cv2.inRange(imgHLS, yellow_lower, yellow_upper)
-            yellow_mask=cv2.GaussianBlur(yellow_mask,(9,9),10)
+            yellow_mask=cv2.GaussianBlur(yellow_mask,(3,3),10)
             mask=cv2.threshold(yellow_mask,127,255,cv2.THRESH_BINARY)[-1]
         
         else:
@@ -53,30 +55,35 @@ class ColorDetector(DTROS):
             red_mask_1=cv2.inRange(imgHLS, red_lower_1, red_upper_1)
             red_mask_2=cv2.inRange(imgHLS, red_lower_2, red_upper_2)
             red_mask=cv2.bitwise_or(red_mask_1, red_mask_2)
-            red_mask=cv2.GaussianBlur(red_mask,(9,9),10)
+            red_mask=cv2.GaussianBlur(red_mask,(3,3),10)
             mask=cv2.threshold(red_mask,127,255,cv2.THRESH_BINARY)[-1]
             
         #find contours
-        contours=cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[0]
+        result=cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        contours=result[0]
+        
         #cv2.drawContours(frame,contours,-1,(0,0,255),3)
         #cv2.imshow('contour',frame)
         
         #find min area rectangle
         img_detected=img
         for contour in contours:
-            rect=cv2.minAreaRect(np.vstack(contour).squeeze())
-            box=cv2.boxPoints(rect)
-            box=np.int0(box)
-            img_detected=cv2.drawContours(img_detected,[box],0,(0,0,255),2)
+            #rospy.loginfo(contour.shape)
+            if(contour.shape[0]>3):
+                rect=cv2.minAreaRect(np.vstack(contour).squeeze())
+                box=cv2.boxPoints(rect)
+                box=np.int0(box)
+                img_detected=cv2.drawContours(img_detected,[box],0,(0,0,255),2)
         #cv2.imshow('rect',img)
         return img_detected
 
     def callback(self, img_compressed):
+        rospy.loginfo("Receive an image...")
         img=self.bridge.compressed_imgmsg_to_cv2(img_compressed)
-        img_detected=self.detector(self,img)
+        img_detected=self.detector(img)
         img_debug=self.bridge.cv2_to_compressed_imgmsg(img_detected)
         self.pub.publish(img_debug)
-        
+        rospy.loginfo("Publish a debug image...")
 
 if __name__ == '__main__':
     
