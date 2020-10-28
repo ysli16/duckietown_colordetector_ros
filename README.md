@@ -1,47 +1,41 @@
-# Template: template-ros
+## Execution
 
-This template provides a boilerplate repository
-for developing ROS-based software in Duckietown.
+### Build docker image
+Run command
 
-**NOTE:** If you want to develop software that does not use
-ROS, check out [this template](https://github.com/duckietown/template-basic).
+`dts devel build -f `
 
+### Run docker container on PC with access to ROS on duckiebot
+Run command
 
-## How to use it
+`docker  run -it --net host -e ROS_MASTER_URI=http://<host_ip>:11311/ -e ROS_IP=<duckiebot_ip> duckietown/duckietown_colordetector_ros:v2-amd64`
 
-### 1. Fork this repository
+Replace `<host_ip>` and `<duckiebot_ip>` with the IP address of your PC and your duckiebot. You can check the IP address with command `ifconfig`. 
 
-Use the fork button in the top-right corner of the github page to fork this template repository.
+### Set color to detect
+Open a container connected to the duckbot with command
 
+`dts start_gui_tools <robot_name>`
 
-### 2. Create a new repository
+Replace `<robot_name>` with name of your duckiebot.
 
-Create a new repository on github.com while
-specifying the newly forked template repository as
-a template for your new repository.
+Change rosparameter to "red" or "yellow" with command
 
+`rosparam set /<robot_name>/colordetector/color <value>`
 
-### 3. Define dependencies
+Replace `<robot_name>` with name of your duckiebot. Replace `<value>` with "red" or "yellow".
 
-List the dependencies in the files `dependencies-apt.txt` and
-`dependencies-py3.txt` (apt packages and pip packages respectively).
+### Check result
+Open a container connected to the duckbot with command
 
+`dts start_gui_tools <robot_name>`
 
-### 4. Place your code
+Replace `<robot_name>` with name of your duckiebot.
 
-Place your code in the directory `/packages/` of
-your new repository.
+Run command 
 
+`rqt_image_view`
 
-### 5. Setup launchers
+Check topic
 
-The directory `/launchers` can contain as many launchers (launching scripts)
-as you want. A default launcher called `default.sh` must always be present.
-
-If you create an executable script (i.e., a file with a valid shebang statement)
-a launcher will be created for it. For example, the script file 
-`/launchers/my-launcher.sh` will be available inside the Docker image as the binary
-`dt-launcher-my-launcher`.
-
-When launching a new container, you can simply provide `dt-launcher-my-launcher` as
-command.
+`<robot_name>/colordetector/image/compressed`
