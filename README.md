@@ -21,7 +21,7 @@ Replace `<robot_name>` with name of your duckiebot.
 
 Change rosparameter to "red" or "yellow" with command
 
-`rosparam set /<robot_name>/colordetector/color <value>`
+`rosparam set /colordetector/color <value>`
 
 Replace `<robot_name>` with name of your duckiebot. Replace `<value>` with "red" or "yellow".
 
@@ -38,4 +38,4 @@ Run command
 
 Check topic
 
-`<robot_name>/colordetector/image/compressed`
+`/colordetector/image/compressed`
